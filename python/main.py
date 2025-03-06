@@ -94,13 +94,16 @@ async def add_item(
 # STEP 4-3: get_items is a handler to return items for GET /items .
 @app.get("/items")
 def get_items():
-    if not os.path.exists("items.json"):
-        return []
+    return load_items()
 
-    with open("items.json", "r") as f:
-        items = json.load(f)
-
-    return items
+@app.get("/items/{item_id}")
+def get_item_by_id(item_id: int):
+    items = load_items()
+    if item_id >= len(items):
+        raise HTTPException(status_code=404, detail="Item not found")
+    elif item_id < 0:
+        raise HTTPException(status_code=400, detail="Invalid item ID")
+    return items[item_id]
 
 
 # get_image is a handler to return an image for GET /images/{filename} .
@@ -125,10 +128,7 @@ class Item(BaseModel):
     image: str
 
 
-def insert_item(item: Item):
-    # STEP 4-2: add an implementation to store an item
-    item_dict = {"name": item.name, "category": item.category, "image": item.image}
-
+def load_items():
     if os.path.exists("items.json"):
         with open("items.json", "r") as f:
             try:
@@ -137,7 +137,13 @@ def insert_item(item: Item):
                 items = []
     else:
         items = []
+    return items
     
+
+def insert_item(item: Item):
+    # STEP 4-2: add an implementation to store an item
+    item_dict = {"name": item.name, "category": item.category, "image": item.image}
+    items = load_items()
     items.append(item_dict)
     
     with open("items.json", "w") as f:
