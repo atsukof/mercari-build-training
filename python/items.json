@@ -22,5 +22,14 @@
   {
     "name": "hat",
     "category": "fashion"
+  },
+  {
+    "name": "jacket",
+    "category": "fashion"
+  },
+  {
+    "name": "jacket",
+    "category": "fashion",
+    "image": "7710fbe6f74db7f7f94d72edb2528e18383ac6be247e5b31ac468b4c058a2ed2.jpg"
   }
 ]
