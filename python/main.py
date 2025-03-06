@@ -7,6 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 import sqlite3
 from pydantic import BaseModel
 from contextlib import asynccontextmanager
+import json
 
 
 # Define the path to the images & sqlite3 database
@@ -69,13 +70,29 @@ class AddItemResponse(BaseModel):
 @app.post("/items", response_model=AddItemResponse)
 def add_item(
     name: str = Form(...),
+    category: str = Form(...),
     db: sqlite3.Connection = Depends(get_db),
 ):
     if not name:
         raise HTTPException(status_code=400, detail="name is required")
 
-    insert_item(Item(name=name))
-    return AddItemResponse(**{"message": f"item received: {name}"})
+    if not category:
+        raise HTTPException(status_code=400, detail="category is required")
+
+    insert_item(Item(name=name, category=category))
+    return AddItemResponse(**{"message": f"item received: {name}"}) 
+
+
+# STEP 4-3: get_items is a handler to return items for GET /items .
+@app.get("/items")
+def get_items():
+    if not os.path.exists("items.json"):
+        return []
+
+    with open("items.json", "r") as f:
+        items = json.load(f)
+
+    return items
 
 
 # get_image is a handler to return an image for GET /images/{filename} .
@@ -96,8 +113,23 @@ async def get_image(image_name):
 
 class Item(BaseModel):
     name: str
+    category: str
 
 
 def insert_item(item: Item):
     # STEP 4-2: add an implementation to store an item
-    pass
+    item_dict = {"name": item.name, "category": item.category}
+
+    if os.path.exists("items.json"):
+        with open("items.json", "r") as f:
+            try:
+                items = json.load(f)
+            except json.JSONDecodeError:
+                items = []
+    else:
+        items = []
+    
+    items.append(item_dict)
+    
+    with open("items.json", "w") as f:
+        json.dump(items, f, indent=2)
