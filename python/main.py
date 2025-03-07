@@ -32,7 +32,7 @@ def get_db():
 def setup_database():
     if not db.exists():
         with sqlite3.connect(db) as conn:
-            with open(db/items.sql, "r") as f:
+            with open("db/items.sql", "r") as f:
                 conn.executescript(f.read())
 
 
