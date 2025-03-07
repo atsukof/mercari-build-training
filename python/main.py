@@ -103,17 +103,25 @@ async def add_item(
 
 # STEP 4-3: get_items is a handler to return items for GET /items .
 @app.get("/items")
-def get_items():
-    return load_items()
+def get_items(db: sqlite3.Connection = Depends(get_db)):
+    cursor = db.cursor()
+    return cursor.execute("SELECT * FROM items").fetchall()
 
 @app.get("/items/{item_id}")
-def get_item_by_id(item_id: int):
-    items = load_items()
-    if item_id >= len(items):
+def get_item_by_id(item_id: int, db: sqlite3.Connection = Depends(get_db)):
+    cursor = db.cursor()
+    item = cursor.execute("SELECT * FROM items WHERE id = ?", (item_id,)).fetchone()
+    if item is None:
         raise HTTPException(status_code=404, detail="Item not found")
-    elif item_id < 0:
-        raise HTTPException(status_code=400, detail="Invalid item ID")
-    return items[item_id]
+    return item
+
+    # STEP4 code below is for JSON file
+    # items = load_items()
+    # if item_id >= len(items):
+    #     raise HTTPException(status_code=404, detail="Item not found")
+    # elif item_id < 0:
+    #     raise HTTPException(status_code=400, detail="Invalid item ID")
+    # return items[item_id]
 
 
 # get_image is a handler to return an image for GET /images/{filename} .
