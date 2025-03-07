@@ -92,9 +92,18 @@ async def add_item(
 
     # insert_item(Item(name=name, category=category, image=f"{hash_name}.jpg")) # use SQLite instead of JSON
     cursor = db.cursor()
+
+    # check if the category exists
+    category_row = cursor.execute("SELECT id FROM categories WHERE name = ?", (category,)).fetchone()
+    if category_row is None:
+        cursor.execute("INSERT INTO categories (name) VALUES (?)", (category,))
+        category_id = cursor.lastrowid
+    else:
+        category_id = category_row["id"]
+
     cursor.execute(
-        "INSERT INTO items (name, category, image_name) VALUES (?, ?, ?)",
-        (name, category, f"{hash_name}.jpg"),
+        "INSERT INTO items (name, category_id, image_name) VALUES (?, ?, ?)",
+        (name, category_id, f"{hash_name}.jpg"),
     )
     db.commit()
 
@@ -105,12 +114,17 @@ async def add_item(
 @app.get("/items")
 def get_items(db: sqlite3.Connection = Depends(get_db)):
     cursor = db.cursor()
-    return cursor.execute("SELECT * FROM items").fetchall()
+    return cursor.execute(
+        "SELECT i.id, i.name, c.name AS category, i.image_name FROM items AS i INNER JOIN categories AS c ON i.category_id = c.id"
+        ).fetchall()
 
 @app.get("/items/{item_id}")
 def get_item_by_id(item_id: int, db: sqlite3.Connection = Depends(get_db)):
     cursor = db.cursor()
-    item = cursor.execute("SELECT * FROM items WHERE id = ?", (item_id,)).fetchone()
+    item = cursor.execute(
+        "SELECT i.id, i.name, c.name AS category, i.image_name FROM items AS i INNER JOIN categories AS c ON i.category_id = c.id WHERE i.id = ?"
+        , (item_id,)
+        ).fetchone()
     if item is None:
         raise HTTPException(status_code=404, detail="Item not found")
     return item
