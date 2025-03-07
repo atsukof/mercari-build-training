@@ -20,7 +20,7 @@ def get_db():
     if not db.exists():
         yield
 
-    conn = sqlite3.connect(db)
+    conn = sqlite3.connect(db, check_same_thread=False )
     conn.row_factory = sqlite3.Row  # Return rows as dictionaries
     try:
         yield conn
@@ -90,10 +90,10 @@ async def add_item(
     with open(image_path, "wb") as f:
         f.write(file_content)
 
-    # insert_item(Item(name=name, category=category, image=f"{hash_name}.jpg"))
+    # insert_item(Item(name=name, category=category, image=f"{hash_name}.jpg")) # use SQLite instead of JSON
     cursor = db.cursor()
     cursor.execute(
-        "INSERT INTO items (name, category, image) VALUES (?, ?, ?)",
+        "INSERT INTO items (name, category, image_name) VALUES (?, ?, ?)",
         (name, category, f"{hash_name}.jpg"),
     )
     db.commit()
