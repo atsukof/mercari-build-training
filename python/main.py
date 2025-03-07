@@ -1,7 +1,7 @@
 import os
 import logging
 import pathlib
-from fastapi import FastAPI, Form, HTTPException, Depends, File, UploadFile
+from fastapi import FastAPI, Form, HTTPException, Depends, File, UploadFile, Query
 from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 import sqlite3
@@ -138,6 +138,15 @@ async def get_image(image_name):
         image = images / "default.jpg"
 
     return FileResponse(image)
+
+# STEP 5-2 : Implement the search endpoint
+@app.get("/search")
+def search_items(keyword: str = Query(...), db: sqlite3.Connection = Depends(get_db)):
+    cursor = db.cursor()
+    items = cursor.execute("SELECT * from items WHERE name LIKE ?", (f"%{keyword}%",)).fetchall()
+    if items is None:
+        raise HTTPException(status_code=404, detail="Item not found")
+    return items
 
 
 class Item(BaseModel):
