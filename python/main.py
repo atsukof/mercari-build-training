@@ -30,7 +30,10 @@ def get_db():
 
 # STEP 5-1: set up the database connection
 def setup_database():
-    pass
+    if not db.exists():
+        with sqlite3.connect(db) as conn:
+            with open(db/items.sql, "r") as f:
+                conn.executescript(f.read())
 
 
 @asynccontextmanager
@@ -87,7 +90,14 @@ async def add_item(
     with open(image_path, "wb") as f:
         f.write(file_content)
 
-    insert_item(Item(name=name, category=category, image=f"{hash_name}.jpg"))
+    # insert_item(Item(name=name, category=category, image=f"{hash_name}.jpg"))
+    cursor = db.cursor()
+    cursor.execute(
+        "INSERT INTO items (name, category, image) VALUES (?, ?, ?)",
+        (name, category, f"{hash_name}.jpg"),
+    )
+    db.commit()
+
     return AddItemResponse(**{"message": f"item received: {name}"}) 
 
 
