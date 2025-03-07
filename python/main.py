@@ -114,9 +114,12 @@ async def add_item(
 @app.get("/items")
 def get_items(db: sqlite3.Connection = Depends(get_db)):
     cursor = db.cursor()
-    return cursor.execute(
+    items = cursor.execute(
         "SELECT i.id, i.name, c.name AS category, i.image_name FROM items AS i INNER JOIN categories AS c ON i.category_id = c.id"
         ).fetchall()
+    if items is None:
+        return []
+    return items
 
 @app.get("/items/{item_id}")
 def get_item_by_id(item_id: int, db: sqlite3.Connection = Depends(get_db)):
