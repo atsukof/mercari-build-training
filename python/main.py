@@ -1,7 +1,7 @@
 import os
 import logging
 import pathlib
-from fastapi import FastAPI, Form, HTTPException, Depends, File, UploadFile
+from fastapi import FastAPI, Form, HTTPException, Depends, File, UploadFile, Query
 from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 import sqlite3
@@ -20,7 +20,7 @@ def get_db():
     if not db.exists():
         yield
 
-    conn = sqlite3.connect(db)
+    conn = sqlite3.connect(db, check_same_thread=False )
     conn.row_factory = sqlite3.Row  # Return rows as dictionaries
     try:
         yield conn
@@ -30,7 +30,10 @@ def get_db():
 
 # STEP 5-1: set up the database connection
 def setup_database():
-    pass
+    if not db.exists():
+        with sqlite3.connect(db) as conn:
+            with open(pathlib.Path(__file__).parent.resolve() / "db" / "items.sql", "r") as f:
+                conn.executescript(f.read())
 
 
 @asynccontextmanager
@@ -87,23 +90,55 @@ async def add_item(
     with open(image_path, "wb") as f:
         f.write(file_content)
 
-    insert_item(Item(name=name, category=category, image=f"{hash_name}.jpg"))
+    # insert_item(Item(name=name, category=category, image=f"{hash_name}.jpg")) # use SQLite instead of JSON
+    cursor = db.cursor()
+
+    # check if the category exists
+    category_row = cursor.execute("SELECT id FROM categories WHERE name = ?", (category,)).fetchone()
+    if category_row is None:
+        cursor.execute("INSERT INTO categories (name) VALUES (?)", (category,))
+        category_id = cursor.lastrowid
+    else:
+        category_id = category_row["id"]
+
+    cursor.execute(
+        "INSERT INTO items (name, category_id, image_name) VALUES (?, ?, ?)",
+        (name, category_id, f"{hash_name}.jpg"),
+    )
+    db.commit()
+
     return AddItemResponse(**{"message": f"item received: {name}"}) 
 
 
 # STEP 4-3: get_items is a handler to return items for GET /items .
 @app.get("/items")
-def get_items():
-    return load_items()
+def get_items(db: sqlite3.Connection = Depends(get_db)):
+    cursor = db.cursor()
+    items = cursor.execute(
+        "SELECT i.id, i.name, c.name AS category, i.image_name FROM items AS i INNER JOIN categories AS c ON i.category_id = c.id"
+        ).fetchall()
+    if items is None:
+        return []
+    return items
 
 @app.get("/items/{item_id}")
-def get_item_by_id(item_id: int):
-    items = load_items()
-    if item_id >= len(items):
+def get_item_by_id(item_id: int, db: sqlite3.Connection = Depends(get_db)):
+    cursor = db.cursor()
+    item = cursor.execute(
+        "SELECT i.id, i.name, c.name AS category, i.image_name FROM items AS i INNER JOIN categories AS c ON i.category_id = c.id WHERE i.id = ?"
+        , (item_id,)
+        ).fetchone()
+    if item is None:
         raise HTTPException(status_code=404, detail="Item not found")
-    elif item_id < 0:
-        raise HTTPException(status_code=400, detail="Invalid item ID")
-    return items[item_id]
+    return item
+
+    # STEP4 code below is for JSON file
+    # items = load_items()
+    # if item_id >= len(items):
+    #     raise HTTPException(status_code=404, detail="Item not found")
+    # elif item_id < 0:
+    #     raise HTTPException(status_code=400, detail="Invalid item ID")
+    # return items[item_id]
 
 
 # get_image is a handler to return an image for GET /images/{filename} .
@@ -120,6 +155,15 @@ async def get_image(image_name):
         image = images / "default.jpg"
 
     return FileResponse(image)
+
+# STEP 5-2 : Implement the search endpoint
+@app.get("/search")
+def search_items(keyword: str = Query(...), db: sqlite3.Connection = Depends(get_db)):
+    cursor = db.cursor()
+    items = cursor.execute("SELECT * from items WHERE name LIKE ?", (f"%{keyword}%",)).fetchall()
+    if items is None:
+        raise HTTPException(status_code=404, detail="Item not found")
+    return items
 
 
 class Item(BaseModel):
