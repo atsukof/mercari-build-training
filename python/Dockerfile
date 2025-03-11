@@ -1,8 +1,15 @@
-FROM alpine
+FROM python:3-alpine
 
+WORKDIR /app
 RUN addgroup -S mercari && adduser -S trainee -G mercari
-# RUN chown -R trainee:mercari /path/to/db
 
+COPY requirements.txt /app
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy the current directory contents into the container at /app
+COPY . /app
+
+RUN chown -R trainee:mercari /app
 USER trainee
 
-CMD ["python", "-V"]
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "9000"]
