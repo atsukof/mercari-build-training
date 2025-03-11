@@ -192,3 +192,5 @@ def insert_item(item: Item):
     
     with open("items.json", "w") as f:
         json.dump(items, f, indent=2)
+
+# this code is just for testing github actions
