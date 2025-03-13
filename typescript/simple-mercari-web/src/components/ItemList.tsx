@@ -1,8 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Item, fetchItems } from '~/api';
 
-const PLACEHOLDER_IMAGE = import.meta.env.VITE_FRONTEND_URL + '/logo192.png';
-
 
 interface Prop {
   reload: boolean;

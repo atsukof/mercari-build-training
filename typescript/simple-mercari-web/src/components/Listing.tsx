@@ -91,7 +91,6 @@ export const Listing = ({ onListingCompleted }: Prop) => {
               type="text"
               name="category"
               id="category"
-              placeholder="category"
               onChange={onValueChange}
               value={values.category}
               className="form-control"
