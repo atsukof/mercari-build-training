@@ -4,6 +4,7 @@ import pathlib
 from fastapi import FastAPI, Form, HTTPException, Depends, File, UploadFile, Query
 from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 import sqlite3
 from pydantic import BaseModel
 from contextlib import asynccontextmanager
@@ -14,6 +15,7 @@ import hashlib
 # Define the path to the images & sqlite3 database
 images = pathlib.Path(__file__).parent.resolve() / "images"
 db = pathlib.Path(__file__).parent.resolve() / "db" / "mercari.sqlite3"
+
 
 
 def get_db():
@@ -56,6 +58,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+app.mount("/images", StaticFiles(directory=images), name="images")
 
 class HelloResponse(BaseModel):
     message: str
@@ -113,13 +116,15 @@ async def add_item(
 # STEP 4-3: get_items is a handler to return items for GET /items .
 @app.get("/items")
 def get_items(db: sqlite3.Connection = Depends(get_db)):
+    items_dict = {}
     cursor = db.cursor()
     items = cursor.execute(
         "SELECT i.id, i.name, c.name AS category, i.image_name FROM items AS i INNER JOIN categories AS c ON i.category_id = c.id"
         ).fetchall()
+    items_dict["items"] = items
     if items is None:
-        return []
-    return items
+        return items_dict
+    return items_dict
 
 @app.get("/items/{item_id}")
 def get_item_by_id(item_id: int, db: sqlite3.Connection = Depends(get_db)):

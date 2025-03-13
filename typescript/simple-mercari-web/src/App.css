@@ -3,36 +3,37 @@
 }
 
 .Title {
-  background-color: #222427;
+  background-color: #003092;
   min-height: 8vh;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: left;
+  justify-content: center;
   font-size: calc(10px + 1vmin);
-  color: white;
+  font-family:sans-serif;
+  color: #FFAB5B;
 }
 
 .Listing {
-  background-color: #222427;
+  background-color: #FFF2DB;
   min-height: 8vh;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: left;
+  justify-content: center;
   font-size: calc(10px + 1vmin);
-  color: white;
+  color: #FFAB5B;
 }
 
 .ItemList {
-  background-color: #222427;
+  background-color: #fff;
   min-height: 8vh;
   display: flex;
   flex-direction: column;
-  align-items: center;
+  /* align-items: center; */
   justify-content: left;
   font-size: calc(10px + 1vmin);
-  color: white;
+  color: #003092;
 }
 
 .App-link {
