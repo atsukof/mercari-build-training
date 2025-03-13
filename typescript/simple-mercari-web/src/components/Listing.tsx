@@ -69,34 +69,48 @@ export const Listing = ({ onListingCompleted }: Prop) => {
       });
   };
   return (
-    <div className="Listing">
+    <div className="Listing pt-2 pb-3">
       <form onSubmit={onSubmit}>
         <div>
-          <input
-            type="text"
-            name="name"
-            id="name"
-            placeholder="name"
-            onChange={onValueChange}
-            required
-            value={values.name}
-          />
-          <input
-            type="text"
-            name="category"
-            id="category"
-            placeholder="category"
-            onChange={onValueChange}
-            value={values.category}
-          />
-          <input
-            type="file"
-            name="image"
-            id="image"
-            onChange={onFileChange}
-            required
-            ref={uploadImageRef}
-          />
+          <div className="mb-1">
+            <label className="form-label">Name</label>
+            <input
+              type="text"
+              name="name"
+              id="name"
+              onChange={onValueChange}
+              required
+              value={values.name}
+              className="form-control"
+            />
+          </div>
+
+          <div className="mb-1">
+            <label className="form-label">Category</label>
+            <input
+              type="text"
+              name="category"
+              id="category"
+              placeholder="category"
+              onChange={onValueChange}
+              value={values.category}
+              className="form-control"
+            />
+          </div>
+
+          <div className="mb-3">
+            <label className="form-label">Image</label>
+            <input
+              type="file"
+              name="image"
+              id="image"
+              onChange={onFileChange}
+              required
+              ref={uploadImageRef}
+              className="form-control"
+            />
+          </div>
+
           <button type="submit">List this item</button>
         </div>
       </form>
